@@ -395,61 +395,102 @@
                     }
                 });
             },
-
+            
             initAuth() {
-                const loginBtn = document.getElementById('login-btn');
-                const logoutBtn = document.getElementById('logout-btn');
-                const passwordInput = document.getElementById('password-input');
-                const emailInput = document.getElementById('email-input');
-                const authStatus = document.getElementById('auth-status');
-                const loginView = document.getElementById('login-view');
-                const appView = document.getElementById('app');
+                document.getElementById('login-btn').addEventListener('click', () => this.signInWithGoogle());
+                document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
 
-                loginBtn.addEventListener('click', () => {
-                    const email = emailInput.value;
-                    const password = passwordInput.value;
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        authStatus.textContent = 'Đang xác thực...';
+                        const isAuthorized = await this.checkAuthorization(user);
 
-                    authStatus.textContent = ''; // Clear previous messages
-                    authStatus.classList.remove('text-red-600');
-
-                    if (!email) {
-                        authStatus.textContent = 'Vui lòng nhập email.';
-                        authStatus.classList.add('text-red-600');
-                        return;
-                    }
-                    
-                    if (password === 'buildtalents') {
-                        this.state.user = {
-                            displayName: email.split('@')[0],
-                            email: email,
-                            uid: 'local_' + email
-                        };
-
-                        loginView.classList.add('hidden');
-                        appView.classList.remove('hidden');
-                        document.getElementById('user-name').textContent = this.state.user.displayName;
-                        this.loadProgress();
-                        this.renderJourney();
-
+                        if (isAuthorized) {
+                            this.state.user = user;
+                            loginView.classList.add('hidden');
+                            appView.classList.remove('hidden');
+                            document.getElementById('user-name').textContent = user.displayName || user.email;
+                            this.loadProgress();
+                            this.renderJourney();
+                        } else {
+                            authStatus.textContent = `Email ${user.email} không được cấp quyền truy cập.`;
+                            signOut(auth);
+                        }
                     } else {
-                        authStatus.textContent = 'Mật khẩu không chính xác.';
-                        authStatus.classList.add('text-red-600');
+                        this.state.user = null;
+                        appView.classList.add('hidden');
+                        loginView.classList.remove('hidden');
+                        authStatus.textContent = 'Vui lòng đăng nhập để bắt đầu.';
                     }
-                });
-
-                logoutBtn.addEventListener('click', () => {
-                    this.state.user = null;
-                    emailInput.value = '';
-                    passwordInput.value = '';
-                    appView.classList.add('hidden');
-                    loginView.classList.remove('hidden');
                 });
             },
 
-            sendCertificate() {
+            signInWithGoogle() {
+                if (!provider) return;
+                authStatus.textContent = 'Đang chuyển tới Google...';
+                signInWithPopup(auth, provider)
+                    .catch((error) => {
+                        console.error("Lỗi đăng nhập:", error);
+                        authStatus.textContent = `Lỗi đăng nhập: ${error.message}`;
+                    });
+            },
+
+            async checkAuthorization(user) {
+                if (API_BASE_URL === "YOUR_BACKEND_API_URL") {
+                    console.warn("URL Backend chưa được cấu hình. Tạm thời cho phép mọi người dùng truy cập để kiểm thử.");
+                    return true;
+                }
+                try {
+                    const token = await user.getIdToken();
+                    const response = await fetch(`${API_BASE_URL}/api/check-authorization`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    if (response.status === 200) {
+                        const data = await response.json();
+                        return data.authorized;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error("Lỗi khi kiểm tra quyền truy cập:", error);
+                    authStatus.textContent = "Không thể kết nối đến máy chủ xác thực.";
+                    return false;
+                }
+            },
+
+            async sendCertificate() {
                 if (!this.state.user) return;
-                console.log("Sending certificate for:", this.state.user.email);
-                alert(`Một chứng nhận (mô phỏng) đã được gửi tới email ${this.state.user.email}!`);
+                
+                if (API_BASE_URL === "YOUR_BACKEND_API_URL") {
+                    console.warn("URL Backend chưa được cấu hình. Chỉ hiển thị thông báo mô phỏng.");
+                    alert(`Một chứng nhận (mô phỏng) đã được gửi tới email ${this.state.user.email}!`);
+                    return;
+                }
+
+                try {
+                     const token = await this.state.user.getIdToken();
+                     const response = await fetch(`${API_BASE_URL}/api/send-certificate`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            name: this.state.user.displayName || this.state.user.email,
+                            email: this.state.user.email
+                        })
+                    });
+
+                    if (response.ok) {
+                        alert(`Một chứng nhận đã được gửi thành công tới email ${this.state.user.email}!`);
+                    } else {
+                        alert('Đã có lỗi xảy ra khi gửi chứng nhận.');
+                    }
+                } catch (error) {
+                    console.error("Lỗi khi gửi chứng nhận:", error);
+                    alert('Không thể kết nối đến máy chủ để gửi chứng nhận.');
+                }
             },
             
             loadProgress() {
@@ -748,6 +789,4 @@
     </script>
 </body>
 </html>
-
-" but change <script src="https://cdn/tailwindcss.com"></script> to a working url
 
