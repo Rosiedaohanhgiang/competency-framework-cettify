@@ -11,6 +11,8 @@
             font-family: 'Inter', sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
         }
         .journey-card {
             transition: all 0.3s ease;
@@ -43,6 +45,7 @@
         }
         .draggable {
             cursor: move;
+            -webkit-user-select: none;
             user-select: none;
         }
         .droppable {
@@ -63,7 +66,7 @@
             <svg class="w-5 h-5 mr-3" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.223,0-9.65-3.657-11.303-8H6.306C9.656,39.663,16.318,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C41.38,36.173,44,30.659,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
             Đăng nhập bằng Google
         </button>
-        <p id="auth-status" class="mt-4 text-sm text-gray-500"></p>
+        <p id="auth-status" class="mt-4 text-sm text-gray-500 h-5"></p>
     </div>
     
     <!-- Main App View (initially hidden) -->
@@ -100,7 +103,7 @@
         <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col transform scale-95 opacity-0">
             <div class="flex justify-between items-center p-5 border-b border-gray-200">
                 <h3 id="modal-title" class="text-2xl font-bold text-gray-800"></h3>
-                <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <button id="close-modal-btn" title="Đóng" class="text-gray-400 hover:text-gray-600 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
@@ -113,8 +116,8 @@
         </div>
     </div>
     
-    <!-- Firebase SDK -->
     <script type="module">
+        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, getIdToken } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
         
@@ -123,14 +126,14 @@
             apiKey: "AIzaSyBfSu4crK3ShvBAirAW8KzGLDHCIzWSWWI",
             authDomain: "competence-framework-design.firebaseapp.com",
             projectId: "competence-framework-design",
-            storageBucket: "competence-framework-design.firebasestorage.app",
+            storageBucket: "competence-framework-design.appspot.com",
             messagingSenderId: "558913651896",
             appId: "1:558913651896:web:45ab80075a2581bcc8604d",
             measurementId: "G-PM8W74JMD1"
         };
         
         // URL Backend - Thay thế bằng URL Vercel của bạn sau khi triển khai
-        const API_BASE_URL = "https://competency-framework-cettify-rdkv.vercel.app/";
+        const API_BASE_URL = "YOUR_BACKEND_API_URL";
 
         const firebaseApp = initializeApp(firebaseConfig);
         const auth = getAuth(firebaseApp);
@@ -394,100 +397,59 @@
             },
 
             initAuth() {
-                document.getElementById('login-btn').addEventListener('click', () => this.signInWithGoogle());
-                document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+                const loginBtn = document.getElementById('login-btn');
+                const logoutBtn = document.getElementById('logout-btn');
+                const passwordInput = document.getElementById('password-input');
+                const emailInput = document.getElementById('email-input');
+                const authStatus = document.getElementById('auth-status');
+                const loginView = document.getElementById('login-view');
+                const appView = document.getElementById('app');
 
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        authStatus.textContent = 'Đang xác thực...';
-                        const isAuthorized = await this.checkAuthorization(user);
+                loginBtn.addEventListener('click', () => {
+                    const email = emailInput.value;
+                    const password = passwordInput.value;
 
-                        if (isAuthorized) {
-                            this.state.user = user;
-                            loginView.classList.add('hidden');
-                            appView.classList.remove('hidden');
-                            document.getElementById('user-name').textContent = user.displayName || user.email;
-                            this.loadProgress();
-                            this.renderJourney();
-                        } else {
-                            authStatus.textContent = `Email ${user.email} không được cấp quyền truy cập.`;
-                            signOut(auth);
-                        }
-                    } else {
-                        this.state.user = null;
-                        appView.classList.add('hidden');
-                        loginView.classList.remove('hidden');
-                        authStatus.textContent = 'Vui lòng đăng nhập để bắt đầu.';
+                    authStatus.textContent = ''; // Clear previous messages
+                    authStatus.classList.remove('text-red-600');
+
+                    if (!email) {
+                        authStatus.textContent = 'Vui lòng nhập email.';
+                        authStatus.classList.add('text-red-600');
+                        return;
                     }
+                    
+                    if (password === 'buildtalents') {
+                        this.state.user = {
+                            displayName: email.split('@')[0],
+                            email: email,
+                            uid: 'local_' + email
+                        };
+
+                        loginView.classList.add('hidden');
+                        appView.classList.remove('hidden');
+                        document.getElementById('user-name').textContent = this.state.user.displayName;
+                        this.loadProgress();
+                        this.renderJourney();
+
+                    } else {
+                        authStatus.textContent = 'Mật khẩu không chính xác.';
+                        authStatus.classList.add('text-red-600');
+                    }
+                });
+
+                logoutBtn.addEventListener('click', () => {
+                    this.state.user = null;
+                    emailInput.value = '';
+                    passwordInput.value = '';
+                    appView.classList.add('hidden');
+                    loginView.classList.remove('hidden');
                 });
             },
 
-            signInWithGoogle() {
-                if (!provider) return;
-                authStatus.textContent = 'Đang chuyển tới Google...';
-                signInWithPopup(auth, provider)
-                    .catch((error) => {
-                        console.error("Lỗi đăng nhập:", error);
-                        authStatus.textContent = `Lỗi đăng nhập: ${error.message}`;
-                    });
-            },
-
-            async checkAuthorization(user) {
-                if (API_BASE_URL === "YOUR_BACKEND_API_URL") {
-                    console.warn("URL Backend chưa được cấu hình. Tạm thời cho phép mọi người dùng truy cập để kiểm thử.");
-                    return true;
-                }
-                try {
-                    const token = await user.getIdToken();
-                    const response = await fetch(`${API_BASE_URL}/api/check-authorization`, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-                    if (response.status === 200) {
-                        const data = await response.json();
-                        return data.authorized;
-                    }
-                    return false;
-                } catch (error) {
-                    console.error("Lỗi khi kiểm tra quyền truy cập:", error);
-                    authStatus.textContent = "Không thể kết nối đến máy chủ xác thực.";
-                    return false;
-                }
-            },
-
-            async sendCertificate() {
+            sendCertificate() {
                 if (!this.state.user) return;
-                
-                if (API_BASE_URL === "YOUR_BACKEND_API_URL") {
-                    console.warn("URL Backend chưa được cấu hình. Chỉ hiển thị thông báo mô phỏng.");
-                    alert(`Một chứng nhận (mô phỏng) đã được gửi tới email ${this.state.user.email}!`);
-                    return;
-                }
-
-                try {
-                     const token = await this.state.user.getIdToken();
-                     const response = await fetch(`${API_BASE_URL}/api/send-certificate`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({
-                            name: this.state.user.displayName || this.state.user.email,
-                            email: this.state.user.email
-                        })
-                    });
-
-                    if (response.ok) {
-                        alert(`Một chứng nhận đã được gửi thành công tới email ${this.state.user.email}!`);
-                    } else {
-                        alert('Đã có lỗi xảy ra khi gửi chứng nhận.');
-                    }
-                } catch (error) {
-                    console.error("Lỗi khi gửi chứng nhận:", error);
-                    alert('Không thể kết nối đến máy chủ để gửi chứng nhận.');
-                }
+                console.log("Sending certificate for:", this.state.user.email);
+                alert(`Một chứng nhận (mô phỏng) đã được gửi tới email ${this.state.user.email}!`);
             },
             
             loadProgress() {
@@ -596,7 +558,7 @@
                 setTimeout(() => {
                     modal.classList.add('hidden');
                     modal.classList.remove('flex');
-                    this.renderJourney();
+                    this.renderJourney(); // Re-render main journey to update status
                 }, 300);
             },
             
@@ -611,6 +573,7 @@
                         break;
                     case 'choice':
                         const optionsHTML = task.options.map((opt, i) => {
+                            // Using index as value for robustness
                             return `
                             <label class="interactive-choice-option block p-4 border-2 border-gray-200 rounded-lg mb-3 cursor-pointer hover:border-indigo-400 transition-colors">
                                 <input type="radio" name="choice" value="${i}" class="sr-only">
@@ -785,4 +748,6 @@
     </script>
 </body>
 </html>
+
+" but change <script src="https://cdn/tailwindcss.com"></script> to a working url
 
