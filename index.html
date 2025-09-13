@@ -59,13 +59,20 @@
     <div id="login-view" class="max-w-md w-full mx-auto text-center p-8 bg-white rounded-2xl shadow-lg">
         <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Nền tảng Học tập</h1>
         <p class="mt-2 text-lg text-gray-600 mb-8">Chuyên gia thiết kế Khung năng lực</p>
-        <button id="login-btn" class="w-full bg-white hover:bg-gray-100 text-gray-800 font-semibold py-3 px-4 border border-gray-300 rounded-lg shadow-sm flex items-center justify-center transition-colors">
-            <svg class="w-5 h-5 mr-3" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.223,0-9.65-3.657-11.303-8H6.306C9.656,39.663,16.318,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C41.38,36.173,44,30.659,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
-            Đăng nhập bằng Google
-        </button>
-        <p id="auth-status" class="mt-4 text-sm text-gray-500"></p>
+        <div class="space-y-4">
+            <div>
+                <input type="email" id="email-input" placeholder="Nhập email của bạn" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+                <input type="password" id="password-input" placeholder="Nhập mật khẩu" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <button id="login-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg shadow-sm transition-colors">
+                Đăng nhập
+            </button>
+        </div>
+        <p id="auth-status" class="mt-4 text-sm text-red-600"></p>
     </div>
-
+    
     <!-- Main App View (initially hidden) -->
     <div id="app" class="max-w-7xl mx-auto p-4 md:p-8 hidden">
         <header class="text-center mb-8">
@@ -113,51 +120,14 @@
         </div>
     </div>
     
-    <!-- Firebase SDK -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-        
-        const DEVELOPMENT_MODE = true;
-
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
-        
-        const API_BASE_URL = "YOUR_BACKEND_API_URL";
-
-        let firebaseApp, auth, provider;
-
-        if (!DEVELOPMENT_MODE) {
-            try {
-                firebaseApp = initializeApp(firebaseConfig);
-                auth = getAuth(firebaseApp);
-                provider = new GoogleAuthProvider();
-            } catch (error) {
-                console.error("Lỗi khởi tạo Firebase. Vui lòng kiểm tra `firebaseConfig`. Lỗi:", error);
-                const status = document.getElementById('auth-status');
-                if (status) {
-                    status.textContent = "Lỗi cấu hình Firebase. Vui lòng kiểm tra Console (F12) để xem chi tiết.";
-                    status.style.color = 'red';
-                }
-            }
-        }
-
-        const loginView = document.getElementById('login-view');
-        const appView = document.getElementById('app');
-        const authStatus = document.getElementById('auth-status');
-        
         const app = {
              state: {
                 user: null,
                 progress: {},
                 currentStage: null,
-                currentTask: 0
+                currentTask: 0,
+                isAuthenticated: false
             },
             
             journeyData: [
@@ -397,85 +367,75 @@
             ],
 
             init() {
-                if (DEVELOPMENT_MODE) {
-                    this.runInDevMode();
-                } else if (auth) {
-                    this.initAuth();
-                } else {
-                    loginView.classList.remove('hidden');
-                    appView.classList.add('hidden');
-                }
+                this.checkAuthStatus();
+                document.getElementById('login-btn').addEventListener('click', () => this.handleLogin());
+                document.getElementById('logout-btn').addEventListener('click', () => this.handleLogout());
                 document.getElementById('reset-progress-btn').addEventListener('click', () => {
                     if(confirm('Bạn có chắc muốn bắt đầu lại toàn bộ hành trình không? Mọi tiến độ sẽ bị xóa.')) {
                         this.resetProgress();
                     }
                 });
             },
+
+            checkAuthStatus() {
+                const user = sessionStorage.getItem('loggedInUser');
+                if (user) {
+                    this.state.isAuthenticated = true;
+                    this.state.user = JSON.parse(user);
+                    this.showAppView();
+                } else {
+                    this.showLoginView();
+                }
+            },
+
+            handleLogin() {
+                const emailInput = document.getElementById('email-input');
+                const passwordInput = document.getElementById('password-input');
+                const authStatus = document.getElementById('auth-status');
+
+                const email = emailInput.value;
+                const password = passwordInput.value;
+                const correctPassword = 'buildtalents';
+
+                if (!email) {
+                    authStatus.textContent = 'Vui lòng nhập email.';
+                    return;
+                }
+                
+                if (password === correctPassword) {
+                    this.state.isAuthenticated = true;
+                    this.state.user = { email: email, uid: email }; // Use email as unique ID
+                    sessionStorage.setItem('loggedInUser', JSON.stringify(this.state.user));
+                    this.showAppView();
+                } else {
+                    authStatus.textContent = 'Mật khẩu không chính xác.';
+                }
+            },
+
+            handleLogout() {
+                this.state.isAuthenticated = false;
+                this.state.user = null;
+                sessionStorage.removeItem('loggedInUser');
+                this.showLoginView();
+            },
             
-            runInDevMode() {
-                console.warn("Đang chạy ở chế độ DEVELOPMENT_MODE. Chức năng đăng nhập đã được bỏ qua.");
-                this.state.user = {
-                    displayName: "Học viên",
-                    email: "dev@example.com",
-                    uid: "dev_user_123"
-                };
-                loginView.classList.add('hidden');
-                appView.classList.remove('hidden');
-                document.getElementById('user-name').textContent = this.state.user.displayName;
+            showLoginView() {
+                document.getElementById('login-view').classList.remove('hidden');
+                document.getElementById('app').classList.add('hidden');
+            },
+
+            showAppView() {
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+                document.getElementById('user-name').textContent = this.state.user.email;
                 this.loadProgress();
                 this.renderJourney();
-                document.getElementById('logout-btn').addEventListener('click', () => {
-                     alert("Chức năng Đăng xuất bị vô hiệu hóa trong chế độ phát triển.");
-                });
             },
-
-            initAuth() {
-                document.getElementById('login-btn').addEventListener('click', () => this.signInWithGoogle());
-                document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
-
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        authStatus.textContent = 'Đang xác thực...';
-                        const isAuthorized = await this.checkAuthorization(user);
-                        if (isAuthorized) {
-                            this.state.user = user;
-                            loginView.classList.add('hidden');
-                            appView.classList.remove('hidden');
-                            document.getElementById('user-name').textContent = user.displayName || 'Chuyên gia';
-                            this.loadProgress();
-                            this.renderJourney();
-                        } else {
-                            authStatus.textContent = `Email ${user.email} không có quyền truy cập.`;
-                            signOut(auth);
-                        }
-                    } else {
-                        this.state.user = null;
-                        appView.classList.add('hidden');
-                        loginView.classList.remove('hidden');
-                        authStatus.textContent = 'Vui lòng đăng nhập để bắt đầu.';
-                    }
-                });
-            },
-
-            signInWithGoogle() {
-                if (!provider) return;
-                authStatus.textContent = 'Đang chuyển tới Google...';
-                signInWithPopup(auth, provider)
-                    .catch((error) => {
-                        console.error("Lỗi đăng nhập:", error);
-                        authStatus.textContent = `Lỗi đăng nhập: ${error.message}`;
-                    });
-            },
-
-            async checkAuthorization(user) {
-                console.log("Checking authorization for:", user.email);
-                return true; 
-            },
-
-            async sendCertificate() {
+            
+            sendCertificate() {
                 if (!this.state.user) return;
                 console.log("Sending certificate for:", this.state.user.email);
-                alert(`Một chứng nhận (giả lập) đã được gửi tới email ${this.state.user.email}!`);
+                alert(`Một chứng nhận (mô phỏng) đã được gửi tới email ${this.state.user.email}!`);
             },
             
             loadProgress() {
@@ -584,7 +544,7 @@
                 setTimeout(() => {
                     modal.classList.add('hidden');
                     modal.classList.remove('flex');
-                    this.renderJourney(); // Re-render main journey to update status
+                    this.renderJourney();
                 }, 300);
             },
             
@@ -599,7 +559,6 @@
                         break;
                     case 'choice':
                         const optionsHTML = task.options.map((opt, i) => {
-                            // Using index as value for robustness
                             return `
                             <label class="interactive-choice-option block p-4 border-2 border-gray-200 rounded-lg mb-3 cursor-pointer hover:border-indigo-400 transition-colors">
                                 <input type="radio" name="choice" value="${i}" class="sr-only">
@@ -648,7 +607,6 @@
                             feedbackEl.innerHTML = `<p class="text-red-600">Vui lòng chọn một đáp án!</p>`;
                             return;
                         }
-                        // FIX: Compare the text of the selected option with the answer
                         const selectedText = task.options[parseInt(selected.value)];
                         if (selectedText === task.answer) {
                             feedbackEl.innerHTML = `<div class="p-4 rounded-lg bg-green-100 text-green-800">${task.feedback}</div>`;
@@ -775,4 +733,3 @@
     </script>
 </body>
 </html>
-
