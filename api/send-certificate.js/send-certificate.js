@@ -1,47 +1,47 @@
-/**
- * HÀM GỬI EMAIL CHỨNG CHỈ
- * * Nhiệm vụ:
- * 1. Nhận thông tin tên và email của học viên từ frontend khi họ hoàn thành khóa học.
- * 2. Sử dụng SendGrid để soạn và gửi một email chúc mừng (chứng chỉ).
- * * Yêu cầu cài đặt:
- * - Chạy lệnh `npm install @sendgrid/mail` trong thư mục dự án của bạn.
- * - Thiết lập biến môi trường `SENDGRID_API_KEY` trên Vercel.
- * - Xác thực địa chỉ email người gửi trên SendGrid/Twilio Console.
- */
+// Dòng này yêu cầu Vercel chỉ triển khai hàm này ở một khu vực cụ thể
+export const config = {
+  runtime: 'nodejs',
+  regions: ['sfo1'],
+};
 
-// Import thư viện của SendGrid
-const sgMail = require('@sendgrid/mail');
+// Import thư viện SendGrid Mail
+import sgMail from '@sendgrid/mail';
 
-// Lấy API Key của SendGrid từ biến môi trường và thiết lập cho thư viện
+// Lấy API Key của SendGrid từ biến môi trường trên Vercel
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 // Hàm chính của Vercel Serverless Function
 export default async function handler(req, res) {
-  // Chỉ chấp nhận các request gửi lên bằng phương thức POST
+  // Chỉ chấp nhận yêu cầu bằng phương thức POST
   if (req.method !== 'POST') {
-    return res.status(405).send({ message: 'Only POST requests allowed' });
+    res.setHeader('Allow', ['POST']);
+    return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
   }
 
   try {
-    // Lấy thông tin tên và email từ body của request mà frontend gửi lên
+    // Lấy thông tin tên và email từ nội dung request gửi từ frontend
     const { name, email } = req.body;
 
+    // Kiểm tra xem có đủ thông tin cần thiết không
     if (!name || !email) {
-      return res.status(400).json({ success: false, message: 'Missing name or email.' });
+      return res.status(400).json({ success: false, error: 'Missing name or email in request body.' });
     }
 
-    // Tạo nội dung email
+    // Cấu trúc nội dung email
     const msg = {
-      to: email, // Người nhận
-      from: 'your-verified-email@example.com', // << QUAN TRỌNG: THAY BẰNG EMAIL BẠN ĐÃ XÁC THỰC TRÊN SENDGRID
+      to: email,
+      from: {
+        email: 'your-verified-email@example.com', // << THAY BẰNG EMAIL BẠN ĐÃ XÁC THỰC TRÊN SENDGRID
+        name: 'Build Talents Academy' // Tên người gửi hiển thị trong email
+      },
       subject: `Chúc mừng ${name} đã hoàn thành Khóa học Thiết kế Khung Năng lực!`,
       html: `
         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-          <h1 style="color: #4F46E5;">Chúc mừng bạn, ${name}!</h1>
-          <p>Bạn đã hoàn thành xuất sắc khóa học <strong>"Chuyên gia thiết kế Khung năng lực"</strong>.</p>
-          <p>Đây là minh chứng cho nỗ lực và kiến thức chuyên sâu bạn đã đạt được trong việc xây dựng và phát triển nhân tài.</p>
-          <p>Chúng tôi tin rằng bạn đã sẵn sàng để tạo ra những tác động tích cực cho tổ chức của mình.</p>
-          <p>Trân trọng,<br/>Đội ngũ Build Talents</p>
+          <h2>Chúc mừng bạn, ${name}!</h2>
+          <p>Bạn đã hoàn thành xuất sắc khóa học "Chuyên gia thiết kế Khung năng lực".</p>
+          <p>Đây là minh chứng cho nỗ lực và kiến thức chuyên sâu bạn đã đạt được.</p>
+          <p>Chúng tôi rất mong chờ được thấy những thành công của bạn trong tương lai.</p>
+          <p>Trân trọng,<br/><b>Đội ngũ Build Talents</b></p>
         </div>
       `,
     };
@@ -49,15 +49,16 @@ export default async function handler(req, res) {
     // Gửi email bằng SendGrid
     await sgMail.send(msg);
 
-    console.log(`Certificate email sent to: ${email}`);
+    console.log(`Certificate sent to ${email}`);
     return res.status(200).json({ success: true, message: 'Certificate email sent successfully.' });
 
   } catch (error) {
-    // Xử lý các lỗi có thể xảy ra (API key sai, email không hợp lệ...)
-    console.error('Error sending email:', error);
+    console.error('Error sending certificate email:', error);
+    // Ghi lại lỗi chi tiết từ SendGrid (nếu có) để dễ dàng debug
     if (error.response) {
-      console.error(error.response.body)
+      console.error(error.response.body);
     }
-    return res.status(500).json({ success: false, message: 'An error occurred while sending the email.' });
+    return res.status(500).json({ success: false, error: 'An error occurred while sending the email.' });
   }
 }
+
