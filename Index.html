@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chuyên gia thiết kế Khung năng lực - Nền tảng Học tập</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .journey-card {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        .journey-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .modal-backdrop {
+            background-color: rgba(0,0,0,0.5);
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background-color: #4F46E5;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #4338CA;
+        }
+        .progress-bar-fill {
+            transition: width 0.5s ease-in-out;
+        }
+        .interactive-choice-option:has(input:checked) {
+            background-color: #EEF2FF;
+            border-color: #6366F1;
+        }
+        .draggable {
+            cursor: move;
+            user-select: none;
+        }
+        .droppable {
+            min-height: 100px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 flex items-center justify-center min-h-screen">
+
+    <!-- Login View -->
+    <div id="login-view" class="max-w-md w-full mx-auto text-center p-8 bg-white rounded-2xl shadow-lg">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Nền tảng Học tập</h1>
+        <p class="mt-2 text-lg text-gray-600 mb-8">Chuyên gia thiết kế Khung năng lực</p>
+        <button id="login-btn" class="w-full bg-white hover:bg-gray-100 text-gray-800 font-semibold py-3 px-4 border border-gray-300 rounded-lg shadow-sm flex items-center justify-center transition-colors">
+            <svg class="w-5 h-5 mr-3" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.223,0-9.65-3.657-11.303-8H6.306C9.656,39.663,16.318,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C41.38,36.173,44,30.659,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
+            Đăng nhập bằng Google
+        </button>
+        <p id="auth-status" class="mt-4 text-sm text-gray-500"></p>
+    </div>
+
+    <!-- Main App View (initially hidden) -->
+    <div id="app" class="max-w-7xl mx-auto p-4 md:p-8 hidden">
+        <header class="text-center mb-8">
+            <div class="flex justify-between items-center">
+                <div></div> <!-- Spacer -->
+                <div>
+                     <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Chào mừng, <span id="user-name"></span>!</h1>
+                    <p class="mt-2 text-lg text-gray-600">Hành trình xây dựng nền móng nhân sự cho tổ chức của bạn bắt đầu tại đây.</p>
+                </div>
+                <button id="logout-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-sm transition-colors">Đăng xuất</button>
+            </div>
+        </header>
+
+        <main id="main-content" class="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+            <h2 class="text-2xl font-bold text-indigo-700 mb-6">Hành Trình Kiến Tạo</h2>
+            <p class="mb-8 text-gray-600">Hoàn thành 4 giai đoạn cốt lõi để xây dựng một Khung Năng Lực Toàn Diện và nhận chứng chỉ "Chuyên gia thiết kế Khung năng lực" của riêng bạn.</p>
+
+            <div id="journey-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Journey Cards will be dynamically inserted here by JavaScript -->
+            </div>
+            
+            <div class="mt-8 text-center">
+                <button id="reset-progress-btn" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    Bắt đầu lại hành trình
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for activities -->
+    <div id="activity-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+        <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col transform scale-95 opacity-0">
+            <div class="flex justify-between items-center p-5 border-b border-gray-200">
+                <h3 id="modal-title" class="text-2xl font-bold text-gray-800"></h3>
+                <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="modal-body" class="p-6 overflow-y-auto flex-grow"></div>
+            <div class="p-4 bg-gray-50 border-t border-gray-200 rounded-b-2xl">
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="modal-progress-bar" class="bg-indigo-600 h-2.5 rounded-full progress-bar-fill" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        
+        const DEVELOPMENT_MODE = true;
+
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        const API_BASE_URL = "YOUR_BACKEND_API_URL";
+
+        let firebaseApp, auth, provider;
+
+        if (!DEVELOPMENT_MODE) {
+            try {
+                firebaseApp = initializeApp(firebaseConfig);
+                auth = getAuth(firebaseApp);
+                provider = new GoogleAuthProvider();
+            } catch (error) {
+                console.error("Lỗi khởi tạo Firebase. Vui lòng kiểm tra `firebaseConfig`. Lỗi:", error);
+                const status = document.getElementById('auth-status');
+                if (status) {
+                    status.textContent = "Lỗi cấu hình Firebase. Vui lòng kiểm tra Console (F12) để xem chi tiết.";
+                    status.style.color = 'red';
+                }
+            }
+        }
+
+        const loginView = document.getElementById('login-view');
+        const appView = document.getElementById('app');
+        const authStatus = document.getElementById('auth-status');
+        
+        const app = {
+             state: {
+                user: null,
+                progress: {},
+                currentStage: null,
+                currentTask: 0
+            },
+            
+            journeyData: [
+                 {
+                    id: 'stage1',
+                    title: 'Giai đoạn 1: Nền tảng Chiến lược',
+                    description: 'Xây dựng nền móng vững chắc bằng cách liên kết khung năng lực với chiến lược kinh doanh.',
+                    icon: 'M13 10V3.25a.75.75 0 00-1.5 0V10H4.75a.75.75 0 000 1.5h6.75a.75.75 0 000-1.5H13zM12 15.5a1 1 0 100-2 1 1 0 000 2z M18.12 7.12a.75.75 0 00-1.24-.8l-3.37 4.1-1.63-2.18a.75.75 0 00-1.24.8l2.25 3a.75.75 0 001.24 0l4-5z',
+                    tasks: [
+                        { type: 'info', title: 'Thử thách: Bối cảnh BANI', text: 'Thế giới đã chuyển từ VUCA (Biến động, Không chắc chắn, Phức tạp, Mơ hồ) sang BANI (Mong manh, Lo lắng, Phi tuyến, Khó hiểu). Trong bối cảnh này, sự linh hoạt và khả năng thích ứng của con người trở thành yếu tố sống còn. Bạn đã sẵn sàng để trở thành một Chuyên gia thiết kế Khung năng lực chưa?' },
+                        {
+                            type: 'choice',
+                            question: 'Theo bối cảnh thế giới BANI, yếu tố nào trở nên quan trọng nhất đối với một tổ chức?',
+                            options: ['Quy trình làm việc cứng nhắc', 'Công nghệ tiên tiến nhất', 'Sự linh hoạt và khả năng thích ứng của con người', 'Nguồn vốn dồi dào'],
+                            answer: 'Sự linh hoạt và khả năng thích ứng của con người',
+                            feedback: 'Chính xác! Trong một thế giới khó lường, con người chính là lợi thế cạnh tranh bền vững nhất.'
+                        },
+                         {
+                            type: 'choice',
+                            question: 'Vai trò của Nhân sự trong kỷ nguyên hiện tại đã dịch chuyển từ "Người Quản trị" (Administrator) sang vai trò nào?',
+                            options: ['Người giám sát', 'Kiến trúc sư Nhân tài (Talent Architect)', 'Chuyên viên tính lương', 'Đối tác kinh doanh'],
+                            answer: 'Kiến trúc sư Nhân tài (Talent Architect)',
+                            feedback: 'Tuyệt vời! Vai trò của HR không chỉ là giải quyết sự vụ, mà là thiết kế và xây dựng tương lai cho nguồn nhân lực.'
+                        },
+                        {
+                            type: 'case-for-change',
+                            title: 'Công cụ: Xây dựng "Case for Change"',
+                            scenario: 'Ban lãnh đạo đang cân nhắc nhiều dự án. Bạn cần thuyết phục họ rằng dự án "Xây dựng Khung Năng lực" là ưu tiên hàng đầu. Hãy chọn những luận điểm vững chắc nhất cho bản kế hoạch của bạn.',
+                            parts: [
+                                {
+                                    id: 'context',
+                                    title: 'Phần 1: Bối cảnh & Vấn đề',
+                                    question: 'Vấn đề nào sau đây có sức ảnh hưởng lớn nhất đến kết quả kinh doanh?',
+                                    options: [
+                                        'Nhân viên hay đi làm muộn.',
+                                        'Tỷ lệ nghỉ việc của nhân viên mới ở mức 30% trong 6 tháng đầu, gây tốn kém chi phí tuyển dụng và đào tạo.',
+                                        'Hệ thống chấm công đôi khi bị lỗi.',
+                                        'Văn phòng cần được trang trí lại.'
+                                    ],
+                                    answer: 'Tỷ lệ nghỉ việc của nhân viên mới ở mức 30% trong 6 tháng đầu, gây tốn kém chi phí tuyển dụng và đào tạo.'
+                                },
+                                {
+                                    id: 'solution',
+                                    title: 'Phần 2: Giải pháp đề xuất',
+                                    question: 'Giải pháp nào giải quyết được gốc rễ của vấn đề trên?',
+                                    options: [
+                                        'Tổ chức thêm các buổi tiệc để tăng gắn kết.',
+                                        'Xây dựng và triển khai khung năng lực toàn diện để tuyển đúng người, định hướng phát triển rõ ràng và đánh giá công bằng.',
+                                        'Tăng lương cho tất cả mọi người.',
+                                        'Yêu cầu quản lý giám sát nhân viên chặt chẽ hơn.'
+                                    ],
+                                    answer: 'Xây dựng và triển khai khung năng lực toàn diện để tuyển đúng người, định hướng phát triển rõ ràng và đánh giá công bằng.'
+                                },
+                                {
+                                    id: 'benefits',
+                                    title: 'Phần 3: Lợi ích kinh doanh',
+                                    question: 'Lợi ích nào sẽ thuyết phục được CEO, một người rất quan tâm đến các con số?',
+                                    options: [
+                                        'Nhân viên sẽ cảm thấy vui vẻ hơn.',
+                                        'Văn hóa công ty sẽ tốt hơn.',
+                                        'Dự kiến giảm 15% tỷ lệ nghỉ việc, tiết kiệm khoảng 2 tỷ đồng chi phí tuyển dụng và tăng 10% năng suất làm việc của nhân viên mới.',
+                                        'Công ty sẽ có quy trình nhân sự chuyên nghiệp hơn.'
+                                    ],
+                                    answer: 'Dự kiến giảm 15% tỷ lệ nghỉ việc, tiết kiệm khoảng 2 tỷ đồng chi phí tuyển dụng và tăng 10% năng suất làm việc của nhân viên mới.'
+                                },
+                                {
+                                    id: 'plan',
+                                    title: 'Phần 4: Kế hoạch & Nguồn lực',
+                                    question: 'Để dự án thành công, yếu tố nào là cần thiết nhất trong đội ngũ dự án?',
+                                    options: [
+                                        'Chỉ cần phòng Nhân sự tham gia là đủ.',
+                                        'Cần có sự tham gia của một nhà tài trợ là lãnh đạo cấp cao, trưởng dự án, và đại diện từ các khối kinh doanh để đảm bảo tính thực tiễn.',
+                                        'Thuê một đơn vị tư vấn đắt tiền.',
+                                        'Chỉ cần trưởng phòng Nhân sự quyết định mọi thứ.'
+                                    ],
+                                    answer: 'Cần có sự tham gia của một nhà tài trợ là lãnh đạo cấp cao, trưởng dự án, và đại diện từ các khối kinh doanh để đảm bảo tính thực tiễn.'
+                                }
+                            ],
+                            feedback: 'Bản kế hoạch của bạn rất thuyết phục! Việc tập trung vào dữ liệu và lợi ích kinh doanh là chìa khóa để có được sự ủng hộ từ ban lãnh đạo.'
+                        },
+                         {
+                            type: 'choice',
+                            question: 'Case study nào cho thấy việc thay đổi khung năng lực sang "Tư duy Phát triển" (Growth Mindset) là nền tảng cho sự trỗi dậy mạnh mẽ của một tập đoàn công nghệ?',
+                            options: ['Apple', 'Microsoft', 'Amazon', 'Facebook'],
+                            answer: 'Microsoft',
+                            feedback: 'Chính xác! Dưới thời Satya Nadella, Microsoft đã thực hiện một cuộc chuyển đổi văn hóa ngoạn mục, và khung năng lực là công cụ cốt lõi.'
+                        },
+                        { type: 'summary', title: 'Hoàn thành Giai đoạn 1!', text: 'Chúc mừng! Bạn đã đặt xong viên gạch đầu tiên. Nền móng chiến lược đã vững chắc. Giờ là lúc bắt tay vào thiết kế kiến trúc chi tiết.', feedback: 'Bạn đã sẵn sàng cho giai đoạn tiếp theo!' }
+                    ]
+                },
+                {
+                    id: 'stage2',
+                    title: 'Giai đoạn 2: Thiết kế Kiến trúc',
+                    description: 'Xây dựng bản thiết kế chi tiết cho "ngôi nhà" nhân tài với kiến trúc 4 tầng và các Hồ sơ Thành công.',
+                    icon: 'M3.75 4.5a.75.75 0 000 1.5h16.5a.75.75 0 000-1.5H3.75zM3.75 9a.75.75 0 000 1.5h16.5a.75.75 0 000-1.5H3.75zM3.75 13.5a.75.75 0 000 1.5h16.5a.75.75 0 000-1.5H3.75zM3.75 18a.75.75 0 000 1.5h16.5a.75.75 0 000-1.5H3.75z',
+                    tasks: [
+                        {
+                            type: 'drag-drop',
+                            question: 'Công cụ: Kiến trúc 4 tầng. Hãy sắp xếp các năng lực sau vào đúng tầng kiến trúc của chúng.',
+                            items: ['Chính trực', 'Tư duy Chiến lược', 'Phân tích Tài chính', 'Giao tiếp Hiệu quả'],
+                            categories: ['Năng lực Cốt lõi', 'Năng lực Lãnh đạo', 'Năng lực Chuyên môn', 'Năng lực Hành vi'],
+                            solution: {
+                                'Chính trực': 'Năng lực Cốt lõi',
+                                'Tư duy Chiến lược': 'Năng lực Lãnh đạo',
+                                'Phân tích Tài chính': 'Năng lực Chuyên môn',
+                                'Giao tiếp Hiệu quả': 'Năng lực Hành vi'
+                            },
+                            hint: 'Năng lực Hành vi mô tả "cách thức" một người hành động. Năng lực Cốt lõi áp dụng cho mọi người. Lãnh đạo dành cho quản lý. Chuyên môn dành riêng cho một phòng ban.',
+                            feedback: 'Bản thiết kế của bạn rất logic! Việc phân tầng rõ ràng sẽ giúp áp dụng khung năng lực một cách hệ thống.'
+                        },
+                        {
+                            type: 'choice',
+                            question: 'Khi xây dựng Hồ sơ Thành công, kỹ thuật phỏng vấn nào giúp khai thác các hành vi thực tế đã tạo nên sự khác biệt?',
+                            options: ['Phỏng vấn hỏi về điểm mạnh, điểm yếu', 'Phỏng vấn Sự kiện Quan trọng (BEI)', 'Phỏng vấn theo kịch bản có sẵn', 'Trò chuyện thông thường'],
+                            answer: 'Phỏng vấn Sự kiện Quan trọng (BEI)',
+                            feedback: 'Chính xác! BEI (Behavioral Event Interview) giúp chúng ta thu thập bằng chứng cụ thể về hành vi, thay vì những câu trả lời chung chung.'
+                        },
+                         {
+                            type: 'choice',
+                            question: 'Một Hồ sơ Thành công hiệu quả nên tập trung vào bao nhiêu năng lực quan trọng nhất để tránh làm loãng sự tập trung?',
+                            options: ['Càng nhiều càng tốt', 'Dưới 5', 'Từ 8-12', 'Trên 20'],
+                            answer: 'Từ 8-12',
+                            feedback: 'Đúng vậy! Chất lượng hơn số lượng. Tập trung vào những năng lực thực sự tạo ra sự khác biệt là quan trọng nhất.'
+                        },
+                        {
+                            type: 'choice',
+                            question: 'Case study của AT&T cho thấy họ đã xây dựng Hồ sơ Thành công cho các vai trò của tương lai, tập trung vào lĩnh vực nào?',
+                            options: ['Marketing truyền thống', 'Dịch vụ khách hàng qua điện thoại', 'Khoa học dữ liệu và an ninh mạng', 'Quản lý kho bãi'],
+                            answer: 'Khoa học dữ liệu và an ninh mạng',
+                            feedback: 'Tuyệt vời! AT&T là một ví dụ điển hình về việc xây dựng năng lực để đón đầu tương lai, không phải để níu kéo quá khứ.'
+                        },
+                        { type: 'summary', title: 'Hoàn thành Giai đoạn 2!', text: 'Bản thiết kế đã hoàn tất! Các phòng chức năng đã được định hình rõ ràng. Bước tiếp theo, chúng ta sẽ viết nên "cuốn từ điển" chung cho cả tổ chức.', feedback: 'Bạn đang làm rất tốt!' }
+                    ]
+                },
+                {
+                    id: 'stage3',
+                    title: 'Giai đoạn 3: Xây dựng Từ điển',
+                    description: 'Tạo ra một "ngôn ngữ chung" về sự thành công bằng cách định nghĩa chi tiết từng năng lực và chỉ số hành vi.',
+                    icon: 'M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292M18 7.5a.75.75 0 01.75.75v6a.75.75 0 01-1.5 0v-6A.75.75 0 0118 7.5z',
+                    tasks: [
+                        {
+                            type: 'choice',
+                            question: 'Thành phần nào là quan trọng nhất, làm cho năng lực trở nên hữu hình và có thể đo lường được?',
+                            options: ['Tên Năng lực', 'Định nghĩa', 'Nhóm Năng lực', 'Chỉ số Hành vi (Behavioral Indicators)'],
+                            answer: 'Chỉ số Hành vi (Behavioral Indicators)',
+                            feedback: 'Chính xác! Chỉ số hành vi là "bằng chứng" cho thấy một người đang thể hiện năng lực. Nếu không có nó, mọi thứ chỉ là lý thuyết.'
+                        },
+                        {
+                            type: 'drag-drop',
+                            question: 'Công cụ: Bộ từ khóa hành động. Hãy ghép các động từ sau với cấp độ năng lực phù hợp.',
+                            items: ['Lắng nghe', 'Phân tích', 'Dẫn dắt'],
+                            categories: ['Cấp độ 1-2 (Nền tảng)', 'Cấp độ 3 (Thành thạo)', 'Cấp độ 4-5 (Chuyên gia)'],
+                            solution: {
+                                'Lắng nghe': 'Cấp độ 1-2 (Nền tảng)',
+                                'Phân tích': 'Cấp độ 3 (Thành thạo)',
+                                'Dẫn dắt': 'Cấp độ 4-5 (Chuyên gia)'
+                            },
+                            hint: 'Hãy nghĩ về mức độ chủ động và phạm vi ảnh hưởng tăng dần từ cấp độ thấp đến cao.',
+                            feedback: 'Rất tốt! Sử dụng đúng động từ hành động là bí quyết để viết các chỉ số hành vi rõ ràng và phân biệt được cấp độ.'
+                        },
+                        {
+                            type: 'choice',
+                            question: 'Nguyên tắc BARS (Behaviorally Anchored Rating Scales) nhấn mạnh điều gì?',
+                            options: [
+                                'Mỗi điểm trên thang đánh giá phải được "neo" bởi một mô tả hành vi cụ thể.',
+                                'Đánh giá phải dựa trên cảm tính của người quản lý.',
+                                'Chỉ cần đánh giá kết quả cuối cùng.',
+                                'Nhân viên tự đánh giá là đủ.'
+                            ],
+                            answer: 'Mỗi điểm trên thang đánh giá phải được "neo" bởi một mô tả hành vi cụ thể.',
+                            feedback: 'Tuyệt vời! Nguyên tắc BARS giúp loại bỏ sự mơ hồ và đảm bảo tính công bằng trong đánh giá.'
+                        },
+                         {
+                            type: 'choice',
+                            question: 'Case study của Shell cho thấy lợi ích của việc xây dựng một từ điển năng lực toàn cầu là gì?',
+                            options: [
+                                'Giảm chi phí hoạt động.',
+                                'Đảm bảo tiêu chuẩn nhất quán và tạo điều kiện luân chuyển nhân tài quốc tế.',
+                                'Tăng giá cổ phiếu.',
+                                'Chỉ để áp dụng cho trụ sở chính.'
+                            ],
+                            answer: 'Đảm bảo tiêu chuẩn nhất quán và tạo điều kiện luân chuyển nhân tài quốc tế.',
+                            feedback: 'Chính xác! Một ngôn ngữ chung về năng lực giúp các tập đoàn đa quốc gia như Shell quản lý và phát triển nhân tài hiệu quả trên toàn cầu.'
+                        },
+                        { type: 'summary', title: 'Hoàn thành Giai đoạn 3!', text: 'Cuốn từ điển đã được biên soạn! Giờ đây, mọi người trong tổ chức đã có một ngôn ngữ chung để nói về sự thành công. Giai đoạn cuối cùng là thổi hồn vào nó!', feedback: 'Bạn gần đến đích rồi!' }
+                    ]
+                },
+                {
+                    id: 'stage4',
+                    title: 'Giai đoạn 4: Kích hoạt & Đo lường',
+                    description: 'Tích hợp khung năng lực vào vòng đời nhân tài, quản trị sự thay đổi và chứng minh giá trị mang lại.',
+                    icon: 'M10.5 6a7.5 7.5 0 100 15 7.5 7.5 0 000-15zM10.5 1.5a9 9 0 100 18 9 9 0 000-18zM10.5 12a1.5 1.5 0 110-3 1.5 1.5 0 010 3z',
+                    tasks: [
+                        {
+                            type: 'choice',
+                            question: 'Mô hình phát triển 70-20-10 cho thấy nhân viên học hỏi hiệu quả nhất từ đâu?',
+                            options: ['10% từ các khóa đào tạo chính thức', '20% từ tương tác với người khác', '70% từ trải nghiệm và thực hành trong công việc', 'Tất cả các câu trên đều đúng'],
+                            answer: 'Tất cả các câu trên đều đúng',
+                            feedback: 'Chính xác! Và 70% đến từ trải nghiệm thực tế. Khung năng lực giúp định hướng cho các hoạt động học hỏi này trở nên có mục tiêu hơn.'
+                        },
+                        {
+                            type: 'drag-drop',
+                            question: 'Công cụ: Đo lường Hiệu quả. Phân loại các chỉ số sau vào nhóm Định lượng hoặc Định tính.',
+                            items: ['Tỷ lệ giữ chân nhân tài', 'Năng suất lao động', 'Chất lượng các cuộc đối thoại hiệu suất', 'Mức độ gắn kết của nhân viên'],
+                            categories: ['Chỉ số Định lượng', 'Chỉ số Định tính'],
+                            solution: {
+                                'Tỷ lệ giữ chân nhân tài': 'Chỉ số Định lượng',
+                                'Năng suất lao động': 'Chỉ số Định lượng',
+                                'Chất lượng các cuộc đối thoại hiệu suất': 'Chỉ số Định tính',
+                                'Mức độ gắn kết của nhân viên': 'Chỉ số Định tính'
+                            },
+                            hint: 'Định lượng có thể đếm được bằng con số. Định tính liên quan đến chất lượng, cảm nhận.',
+                            feedback: 'Rất tốt! Kết hợp cả hai loại chỉ số sẽ cho bạn một bức tranh toàn cảnh về hiệu quả của dự án.'
+                        },
+                        {
+                            type: 'choice',
+                            question: 'Mô hình quản lý sự thay đổi ADKAR bao gồm những yếu tố nào?',
+                            options: [
+                                'Awareness, Desire, Knowledge, Ability, Reinforcement',
+                                'Action, Diligence, Keenness, Aptitude, Results',
+                                'Analysis, Design, Kinetics, Automation, Review',
+                                'Attitude, Drive, Know-how, Acumen, Reward'
+                            ],
+                            answer: 'Awareness, Desire, Knowledge, Ability, Reinforcement',
+                            feedback: 'Tuyệt vời! Dẫn dắt nhân viên qua 5 bước của ADKAR là chìa khóa để triển khai thành công một dự án có ảnh hưởng lớn đến văn hóa như khung năng lực.'
+                        },
+                         {
+                            type: 'choice',
+                            question: 'Case study của IBM cho thấy họ đã tái cấu trúc khung năng lực để tập trung vào các kỹ năng cần thiết cho kỷ nguyên nào?',
+                            options: ['Kỷ nguyên công nghiệp', 'Kỷ nguyên Internet', 'Kỷ nguyên AI (Trí tuệ nhân tạo)', 'Kỷ nguyên khám phá'],
+                            answer: 'Kỷ nguyên AI (Trí tuệ nhân tạo)',
+                            feedback: 'Chính xác! IBM đã chủ động xây dựng lực lượng lao động cho tương lai bằng cách định hình lại các năng lực cần thiết, ví dụ như "Hợp tác với Máy móc" và "Đạo đức AI".'
+                        },
+                        { type: 'final', title: 'Hành trình hoàn tất!', text: 'CHÚC MỪNG! Bạn đã hoàn thành xuất sắc hành trình và chứng tỏ mình là một Chuyên gia thiết kế Khung năng lực thực thụ. Một chứng nhận (mô phỏng) sẽ được gửi tới email của bạn.', feedback: 'Bạn đã làm được!', certificate: true }
+                    ]
+                }
+            ],
+
+            init() {
+                if (DEVELOPMENT_MODE) {
+                    this.runInDevMode();
+                } else if (auth) {
+                    this.initAuth();
+                } else {
+                    loginView.classList.remove('hidden');
+                    appView.classList.add('hidden');
+                }
+                document.getElementById('reset-progress-btn').addEventListener('click', () => {
+                    if(confirm('Bạn có chắc muốn bắt đầu lại toàn bộ hành trình không? Mọi tiến độ sẽ bị xóa.')) {
+                        this.resetProgress();
+                    }
+                });
+            },
+            
+            runInDevMode() {
+                console.warn("Đang chạy ở chế độ DEVELOPMENT_MODE. Chức năng đăng nhập đã được bỏ qua.");
+                this.state.user = {
+                    displayName: "Học viên",
+                    email: "dev@example.com",
+                    uid: "dev_user_123"
+                };
+                loginView.classList.add('hidden');
+                appView.classList.remove('hidden');
+                document.getElementById('user-name').textContent = this.state.user.displayName;
+                this.loadProgress();
+                this.renderJourney();
+                document.getElementById('logout-btn').addEventListener('click', () => {
+                     alert("Chức năng Đăng xuất bị vô hiệu hóa trong chế độ phát triển.");
+                });
+            },
+
+            initAuth() {
+                document.getElementById('login-btn').addEventListener('click', () => this.signInWithGoogle());
+                document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        authStatus.textContent = 'Đang xác thực...';
+                        const isAuthorized = await this.checkAuthorization(user);
+                        if (isAuthorized) {
+                            this.state.user = user;
+                            loginView.classList.add('hidden');
+                            appView.classList.remove('hidden');
+                            document.getElementById('user-name').textContent = user.displayName || 'Chuyên gia';
+                            this.loadProgress();
+                            this.renderJourney();
+                        } else {
+                            authStatus.textContent = `Email ${user.email} không có quyền truy cập.`;
+                            signOut(auth);
+                        }
+                    } else {
+                        this.state.user = null;
+                        appView.classList.add('hidden');
+                        loginView.classList.remove('hidden');
+                        authStatus.textContent = 'Vui lòng đăng nhập để bắt đầu.';
+                    }
+                });
+            },
+
+            signInWithGoogle() {
+                if (!provider) return;
+                authStatus.textContent = 'Đang chuyển tới Google...';
+                signInWithPopup(auth, provider)
+                    .catch((error) => {
+                        console.error("Lỗi đăng nhập:", error);
+                        authStatus.textContent = `Lỗi đăng nhập: ${error.message}`;
+                    });
+            },
+
+            async checkAuthorization(user) {
+                console.log("Checking authorization for:", user.email);
+                return true; 
+            },
+
+            async sendCertificate() {
+                if (!this.state.user) return;
+                console.log("Sending certificate for:", this.state.user.email);
+                alert(`Một chứng nhận (giả lập) đã được gửi tới email ${this.state.user.email}!`);
+            },
+            
+            loadProgress() {
+                if (!this.state.user) return;
+                const savedProgress = localStorage.getItem(`talentArchitectProgress_${this.state.user.uid}`);
+                if (savedProgress) {
+                    this.state.progress = JSON.parse(savedProgress);
+                } else {
+                    this.state.progress = {};
+                    this.journeyData.forEach(stage => {
+                        this.state.progress[stage.id] = { completed: false, tasksDone: 0 };
+                    });
+                }
+            },
+
+            saveProgress() {
+                if (!this.state.user) return;
+                localStorage.setItem(`talentArchitectProgress_${this.state.user.uid}`, JSON.stringify(this.state.progress));
+            },
+
+            resetProgress() {
+                if (!this.state.user) return;
+                localStorage.removeItem(`talentArchitectProgress_${this.state.user.uid}`);
+                this.loadProgress();
+                this.renderJourney();
+            },
+
+            renderJourney() {
+                const container = document.getElementById('journey-container');
+                container.innerHTML = '';
+                this.journeyData.forEach((stage, index) => {
+                    const isCompleted = this.state.progress[stage.id]?.completed || false;
+                    const isLocked = index > 0 && !this.state.progress[this.journeyData[index - 1].id]?.completed;
+                    
+                    let cardClass = 'bg-white';
+                    let buttonText = 'Bắt đầu';
+                    let buttonClass = 'bg-indigo-600 hover:bg-indigo-700';
+
+                    if (isCompleted) {
+                        cardClass = 'bg-green-50 border-green-400';
+                        buttonText = 'Hoàn thành';
+                        buttonClass = 'bg-green-500 cursor-not-allowed';
+                    } else if (isLocked) {
+                        cardClass = 'bg-gray-100 opacity-60';
+                        buttonText = 'Bị khóa';
+                        buttonClass = 'bg-gray-400 cursor-not-allowed';
+                    }
+
+                    const card = `
+                        <div class="journey-card rounded-xl shadow-md p-6 flex flex-col ${cardClass} border-2 border-transparent">
+                            <div class="flex-grow">
+                                <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center mb-4">
+                                    <svg class="w-6 h-6 text-indigo-600" fill="currentColor" viewBox="0 0 24 24"><path d="${stage.icon}"></path></svg>
+                                </div>
+                                <h3 class="text-xl font-bold mb-2">${stage.title}</h3>
+                                <p class="text-gray-600 text-sm">${stage.description}</p>
+                            </div>
+                            <button data-stage-id="${stage.id}" class="start-stage-btn mt-6 w-full text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105 ${buttonClass}" ${isLocked || isCompleted ? 'disabled' : ''}>
+                                ${buttonText}
+                            </button>
+                        </div>
+                    `;
+                    container.innerHTML += card;
+                });
+
+                document.querySelectorAll('.start-stage-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const stageId = e.target.getAttribute('data-stage-id');
+                        this.startStage(stageId);
+                    });
+                });
+            },
+
+            startStage(stageId) {
+                this.state.currentStage = this.journeyData.find(s => s.id === stageId);
+                this.state.currentTask = 0;
+                this.showModal();
+            },
+            
+            showModal() {
+                const modal = document.getElementById('activity-modal');
+                const modalContent = modal.querySelector('.modal-content');
+
+                document.getElementById('modal-title').innerText = this.state.currentStage.title;
+                this.renderCurrentTask();
+
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    modalContent.classList.remove('scale-95', 'opacity-0');
+                    modalContent.classList.add('scale-100', 'opacity-100');
+                }, 10);
+
+                document.getElementById('close-modal-btn').onclick = () => this.hideModal();
+            },
+
+            hideModal() {
+                const modal = document.getElementById('activity-modal');
+                const modalContent = modal.querySelector('.modal-content');
+
+                modalContent.classList.remove('scale-100', 'opacity-100');
+                modalContent.classList.add('scale-95', 'opacity-0');
+                modal.classList.add('opacity-0');
+                
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    this.renderJourney(); // Re-render main journey to update status
+                }, 300);
+            },
+            
+            renderCurrentTask() {
+                const task = this.state.currentStage.tasks[this.state.currentTask];
+                const body = document.getElementById('modal-body');
+                let content = '';
+
+                switch (task.type) {
+                    case 'info':
+                        content = `<p class="text-lg">${task.text}</p><div class="text-center mt-6"><button class="next-task-btn btn-primary font-semibold py-2 px-6 rounded-lg">Bắt đầu</button></div>`;
+                        break;
+                    case 'choice':
+                        const optionsHTML = task.options.map((opt, i) => {
+                            // Using index as value for robustness
+                            return `
+                            <label class="interactive-choice-option block p-4 border-2 border-gray-200 rounded-lg mb-3 cursor-pointer hover:border-indigo-400 transition-colors">
+                                <input type="radio" name="choice" value="${i}" class="sr-only">
+                                <span class="font-medium">${opt}</span>
+                            </label>`;
+                        }).join('');
+                        content = `<h4 class="text-xl font-semibold mb-4">${task.question}</h4><div>${optionsHTML}</div><div id="choice-feedback" class="mt-4"></div><div class="text-center mt-6"><button class="check-answer-btn btn-primary font-semibold py-2 px-6 rounded-lg">Kiểm tra</button></div>`;
+                        break;
+                    case 'drag-drop':
+                        const itemsHTML = task.items.map(item => `<div draggable="true" class="draggable bg-blue-100 text-blue-800 p-3 rounded-lg mb-2 shadow-sm">${item}</div>`).join('');
+                        const categoriesHTML = task.categories.map(cat => `<div><h4 class="font-semibold text-center mb-2 text-sm">${cat}</h4><div class="droppable bg-gray-100 p-4 rounded-lg border-2 border-dashed border-gray-300" data-category="${cat}"></div></div>`).join('');
+                        content = `<h4 class="text-xl font-semibold mb-4">${task.question}</h4><div class="flex flex-col md:flex-row gap-4"><div class="w-full md:w-1/3 border-b md:border-b-0 md:border-r pb-4 md:pb-0 md:pr-4">${itemsHTML}</div><div class="w-full md:w-2/3 grid grid-cols-2 gap-4">${categoriesHTML}</div></div><div id="drag-drop-feedback" class="mt-4"></div><div class="text-center mt-6"><button id="hint-btn" class="hidden bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-semibold py-2 px-4 rounded-lg mr-2">Gợi ý</button><button class="drag-drop-submit-btn btn-primary font-semibold py-2 px-6 rounded-lg">Kiểm tra Đáp án</button></div>`;
+                        break;
+                    case 'case-for-change':
+                         let partsHTML = task.parts.map(part => {
+                            const partOptions = part.options.map(opt => `
+                                <label class="interactive-choice-option block p-4 border-2 border-gray-200 rounded-lg mb-3 cursor-pointer hover:border-indigo-400 transition-colors">
+                                    <input type="radio" name="case-part-${part.id}" value="${opt}" class="sr-only">
+                                    <span class="font-medium">${opt}</span>
+                                </label>`).join('');
+                            return `<div class="mb-6"><h5 class="text-lg font-bold text-indigo-700 mb-2">${part.title}</h5><p class="mb-3 font-semibold">${part.question}</p>${partOptions}</div>`;
+                        }).join('');
+                        content = `<h4 class="text-xl font-semibold mb-2">${task.title}</h4><p class="mb-6 text-gray-600">${task.scenario}</p>${partsHTML}<div id="case-feedback" class="mt-4"></div><div class="text-center mt-6"><button class="check-case-btn btn-primary font-semibold py-2 px-6 rounded-lg">Trình bày Kế hoạch</button></div>`;
+                        break;
+                    case 'summary':
+                    case 'final':
+                        content = `<h4 class="text-2xl font-bold text-center text-green-600 mb-4">${task.title}</h4><p class="text-lg text-center">${task.text}</p><div class="text-center mt-6"><button class="next-task-btn btn-primary font-semibold py-2 px-6 rounded-lg">Tiếp tục</button></div>`;
+                        break;
+                }
+
+                body.innerHTML = content;
+                this.updateProgressBar();
+                this.attachTaskListeners();
+            },
+
+            attachTaskListeners() {
+                const task = this.state.currentStage.tasks[this.state.currentTask];
+                
+                document.querySelectorAll('.next-task-btn').forEach(btn => btn.addEventListener('click', () => this.nextTask()));
+                
+                if (task.type === 'choice') {
+                    document.querySelector('.check-answer-btn').addEventListener('click', (e) => {
+                        const selected = document.querySelector('input[name="choice"]:checked');
+                        const feedbackEl = document.getElementById('choice-feedback');
+                        if (!selected) {
+                            feedbackEl.innerHTML = `<p class="text-red-600">Vui lòng chọn một đáp án!</p>`;
+                            return;
+                        }
+                        // FIX: Compare the text of the selected option with the answer
+                        const selectedText = task.options[parseInt(selected.value)];
+                        if (selectedText === task.answer) {
+                            feedbackEl.innerHTML = `<div class="p-4 rounded-lg bg-green-100 text-green-800">${task.feedback}</div>`;
+                            e.target.disabled = true;
+                            setTimeout(() => this.nextTask(), 2000);
+                        } else {
+                            feedbackEl.innerHTML = `<div class="p-4 rounded-lg bg-red-100 text-red-800">Chưa chính xác. Hãy thử lại xem!</div>`;
+                        }
+                    });
+                }
+                
+                if (task.type === 'drag-drop') {
+                    const draggables = document.querySelectorAll('.draggable');
+                    const droppables = document.querySelectorAll('.droppable');
+
+                    draggables.forEach(draggable => {
+                        draggable.addEventListener('dragstart', () => draggable.classList.add('opacity-50'));
+                        draggable.addEventListener('dragend', () => draggable.classList.remove('opacity-50'));
+                    });
+
+                    droppables.forEach(droppable => {
+                        droppable.addEventListener('dragover', e => {
+                            e.preventDefault();
+                            droppable.classList.add('bg-gray-200', 'border-indigo-400');
+                        });
+                        droppable.addEventListener('dragleave', () => droppable.classList.remove('bg-gray-200', 'border-indigo-400'));
+                        droppable.addEventListener('drop', e => {
+                            e.preventDefault();
+                            const dragged = document.querySelector('.opacity-50');
+                            if (dragged) e.currentTarget.appendChild(dragged);
+                            droppable.classList.remove('bg-gray-200', 'border-indigo-400');
+                        });
+                    });
+
+                    document.querySelector('.drag-drop-submit-btn').addEventListener('click', (e) => {
+                        let allCorrect = true;
+                        let itemsPlaced = 0;
+                        droppables.forEach(d => {
+                             const itemsInDroppable = d.querySelectorAll('.draggable');
+                             itemsInDroppable.forEach(item => {
+                                 itemsPlaced++;
+                                 if (task.solution[item.innerText] !== d.dataset.category) {
+                                     allCorrect = false;
+                                 }
+                             });
+                        });
+                        
+                        if (itemsPlaced !== task.items.length) allCorrect = false;
+
+                        const feedbackEl = document.getElementById('drag-drop-feedback');
+                        const hintBtn = document.getElementById('hint-btn');
+                        if (allCorrect) {
+                            feedbackEl.innerHTML = `<div class="p-4 rounded-lg bg-green-100 text-green-800">${task.feedback}</div>`;
+                            e.target.disabled = true;
+                            hintBtn.classList.add('hidden');
+                            setTimeout(() => this.nextTask(), 3000);
+                        } else {
+                            feedbackEl.innerHTML = `<div class="p-4 rounded-lg bg-red-100 text-red-800">Chưa chính xác lắm. Hãy thử sắp xếp lại hoặc nhấn "Gợi ý" nhé!</div>`;
+                            if (task.hint) hintBtn.classList.remove('hidden');
+                        }
+                    });
+
+                    const hintBtn = document.getElementById('hint-btn');
+                    if (hintBtn && task.hint) {
+                        hintBtn.addEventListener('click', () => {
+                             const feedbackEl = document.getElementById('drag-drop-feedback');
+                             feedbackEl.innerHTML = `<div class="p-4 rounded-lg bg-yellow-100 text-yellow-800"><strong>Gợi ý:</strong> ${task.hint}</div>`;
+                        });
+                    }
+                }
+                
+                if (task.type === 'case-for-change') {
+                    document.querySelector('.check-case-btn').addEventListener('click', (e) => {
+                        let allCorrect = true;
+                        task.parts.forEach(part => {
+                            const selected = document.querySelector(`input[name="case-part-${part.id}"]:checked`);
+                            if (!selected || selected.value !== part.answer) {
+                                allCorrect = false;
+                            }
+                        });
+                        const feedbackEl = document.getElementById('case-feedback');
+                        if (allCorrect) {
+                            feedbackEl.innerHTML = `<div class="p-4 rounded-lg bg-green-100 text-green-800">${task.feedback}</div>`;
+                            e.target.disabled = true;
+                            setTimeout(() => this.nextTask(), 3000);
+                        } else {
+                            feedbackEl.innerHTML = `<div class="p-4 rounded-lg bg-red-100 text-red-800">Một vài luận điểm trong kế hoạch của bạn chưa thực sự vững chắc. Hãy xem lại nhé!</div>`;
+                        }
+                    });
+                }
+
+                if (task.type === 'final') {
+                    document.querySelector('.next-task-btn').addEventListener('click', () => {
+                         this.sendCertificate();
+                         this.nextTask();
+                     });
+                }
+            },
+
+            nextTask() {
+                this.state.currentTask++;
+                const stage = this.state.currentStage;
+                const progress = this.state.progress[stage.id];
+                
+                if (this.state.currentTask < stage.tasks.length) {
+                    progress.tasksDone = this.state.currentTask;
+                    this.saveProgress();
+                    this.renderCurrentTask();
+                } else {
+                    progress.completed = true;
+                    progress.tasksDone = stage.tasks.length;
+                    this.saveProgress();
+                    this.hideModal();
+                }
+            },
+            
+            updateProgressBar() {
+                const progress = (this.state.currentTask / this.state.currentStage.tasks.length) * 100;
+                document.getElementById('modal-progress-bar').style.width = `${progress}%`;
+            }
+        };
+        
+        app.init();
+    </script>
+</body>
+</html>
+
