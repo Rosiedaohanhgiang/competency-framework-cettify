@@ -59,18 +59,11 @@
     <div id="login-view" class="max-w-md w-full mx-auto text-center p-8 bg-white rounded-2xl shadow-lg">
         <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Nền tảng Học tập</h1>
         <p class="mt-2 text-lg text-gray-600 mb-8">Chuyên gia thiết kế Khung năng lực</p>
-        <div class="space-y-4">
-            <div>
-                <input type="email" id="email-input" placeholder="Nhập email của bạn" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div>
-                <input type="password" id="password-input" placeholder="Nhập mật khẩu" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <button id="login-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg shadow-sm transition-colors">
-                Đăng nhập
-            </button>
-        </div>
-        <p id="auth-status" class="mt-4 text-sm text-red-600"></p>
+        <button id="login-btn" class="w-full bg-white hover:bg-gray-100 text-gray-800 font-semibold py-3 px-4 border border-gray-300 rounded-lg shadow-sm flex items-center justify-center transition-colors">
+            <svg class="w-5 h-5 mr-3" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.223,0-9.65-3.657-11.303-8H6.306C9.656,39.663,16.318,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C41.38,36.173,44,30.659,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
+            Đăng nhập bằng Google
+        </button>
+        <p id="auth-status" class="mt-4 text-sm text-gray-500"></p>
     </div>
     
     <!-- Main App View (initially hidden) -->
@@ -120,14 +113,39 @@
         </div>
     </div>
     
+    <!-- Firebase SDK -->
     <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, getIdToken } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+        
+        // Cấu hình Firebase - Thay thế bằng thông tin của bạn
+        const firebaseConfig = {
+            apiKey: "AIzaSyBfSu4crK3ShvBAirAW8KzGLDHCIzWSWWI",
+            authDomain: "competence-framework-design.firebaseapp.com",
+            projectId: "competence-framework-design",
+            storageBucket: "competence-framework-design.firebasestorage.app",
+            messagingSenderId: "558913651896",
+            appId: "1:558913651896:web:45ab80075a2581bcc8604d",
+            measurementId: "G-PM8W74JMD1"
+        };
+        
+        // URL Backend - Thay thế bằng URL Vercel của bạn sau khi triển khai
+        const API_BASE_URL = "YOUR_BACKEND_API_URL";
+
+        const firebaseApp = initializeApp(firebaseConfig);
+        const auth = getAuth(firebaseApp);
+        const provider = new GoogleAuthProvider();
+
+        const loginView = document.getElementById('login-view');
+        const appView = document.getElementById('app');
+        const authStatus = document.getElementById('auth-status');
+        
         const app = {
              state: {
                 user: null,
                 progress: {},
                 currentStage: null,
                 currentTask: 0,
-                isAuthenticated: false
             },
             
             journeyData: [
@@ -367,9 +385,7 @@
             ],
 
             init() {
-                this.checkAuthStatus();
-                document.getElementById('login-btn').addEventListener('click', () => this.handleLogin());
-                document.getElementById('logout-btn').addEventListener('click', () => this.handleLogout());
+                this.initAuth();
                 document.getElementById('reset-progress-btn').addEventListener('click', () => {
                     if(confirm('Bạn có chắc muốn bắt đầu lại toàn bộ hành trình không? Mọi tiến độ sẽ bị xóa.')) {
                         this.resetProgress();
@@ -377,65 +393,101 @@
                 });
             },
 
-            checkAuthStatus() {
-                const user = sessionStorage.getItem('loggedInUser');
-                if (user) {
-                    this.state.isAuthenticated = true;
-                    this.state.user = JSON.parse(user);
-                    this.showAppView();
-                } else {
-                    this.showLoginView();
+            initAuth() {
+                document.getElementById('login-btn').addEventListener('click', () => this.signInWithGoogle());
+                document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        authStatus.textContent = 'Đang xác thực...';
+                        const isAuthorized = await this.checkAuthorization(user);
+
+                        if (isAuthorized) {
+                            this.state.user = user;
+                            loginView.classList.add('hidden');
+                            appView.classList.remove('hidden');
+                            document.getElementById('user-name').textContent = user.displayName || user.email;
+                            this.loadProgress();
+                            this.renderJourney();
+                        } else {
+                            authStatus.textContent = `Email ${user.email} không được cấp quyền truy cập.`;
+                            signOut(auth);
+                        }
+                    } else {
+                        this.state.user = null;
+                        appView.classList.add('hidden');
+                        loginView.classList.remove('hidden');
+                        authStatus.textContent = 'Vui lòng đăng nhập để bắt đầu.';
+                    }
+                });
+            },
+
+            signInWithGoogle() {
+                if (!provider) return;
+                authStatus.textContent = 'Đang chuyển tới Google...';
+                signInWithPopup(auth, provider)
+                    .catch((error) => {
+                        console.error("Lỗi đăng nhập:", error);
+                        authStatus.textContent = `Lỗi đăng nhập: ${error.message}`;
+                    });
+            },
+
+            async checkAuthorization(user) {
+                if (API_BASE_URL === "YOUR_BACKEND_API_URL") {
+                    console.warn("URL Backend chưa được cấu hình. Tạm thời cho phép mọi người dùng truy cập để kiểm thử.");
+                    return true;
+                }
+                try {
+                    const token = await user.getIdToken();
+                    const response = await fetch(`${API_BASE_URL}/api/check-authorization`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    if (response.status === 200) {
+                        const data = await response.json();
+                        return data.authorized;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error("Lỗi khi kiểm tra quyền truy cập:", error);
+                    authStatus.textContent = "Không thể kết nối đến máy chủ xác thực.";
+                    return false;
                 }
             },
 
-            handleLogin() {
-                const emailInput = document.getElementById('email-input');
-                const passwordInput = document.getElementById('password-input');
-                const authStatus = document.getElementById('auth-status');
-
-                const email = emailInput.value;
-                const password = passwordInput.value;
-                const correctPassword = 'buildtalents';
-
-                if (!email) {
-                    authStatus.textContent = 'Vui lòng nhập email.';
+            async sendCertificate() {
+                if (!this.state.user) return;
+                
+                if (API_BASE_URL === "YOUR_BACKEND_API_URL") {
+                    console.warn("URL Backend chưa được cấu hình. Chỉ hiển thị thông báo mô phỏng.");
+                    alert(`Một chứng nhận (mô phỏng) đã được gửi tới email ${this.state.user.email}!`);
                     return;
                 }
-                
-                if (password === correctPassword) {
-                    this.state.isAuthenticated = true;
-                    this.state.user = { email: email, uid: email }; // Use email as unique ID
-                    sessionStorage.setItem('loggedInUser', JSON.stringify(this.state.user));
-                    this.showAppView();
-                } else {
-                    authStatus.textContent = 'Mật khẩu không chính xác.';
+
+                try {
+                     const token = await this.state.user.getIdToken();
+                     const response = await fetch(`${API_BASE_URL}/api/send-certificate`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            name: this.state.user.displayName || this.state.user.email,
+                            email: this.state.user.email
+                        })
+                    });
+
+                    if (response.ok) {
+                        alert(`Một chứng nhận đã được gửi thành công tới email ${this.state.user.email}!`);
+                    } else {
+                        alert('Đã có lỗi xảy ra khi gửi chứng nhận.');
+                    }
+                } catch (error) {
+                    console.error("Lỗi khi gửi chứng nhận:", error);
+                    alert('Không thể kết nối đến máy chủ để gửi chứng nhận.');
                 }
-            },
-
-            handleLogout() {
-                this.state.isAuthenticated = false;
-                this.state.user = null;
-                sessionStorage.removeItem('loggedInUser');
-                this.showLoginView();
-            },
-            
-            showLoginView() {
-                document.getElementById('login-view').classList.remove('hidden');
-                document.getElementById('app').classList.add('hidden');
-            },
-
-            showAppView() {
-                document.getElementById('login-view').classList.add('hidden');
-                document.getElementById('app').classList.remove('hidden');
-                document.getElementById('user-name').textContent = this.state.user.email;
-                this.loadProgress();
-                this.renderJourney();
-            },
-            
-            sendCertificate() {
-                if (!this.state.user) return;
-                console.log("Sending certificate for:", this.state.user.email);
-                alert(`Một chứng nhận (mô phỏng) đã được gửi tới email ${this.state.user.email}!`);
             },
             
             loadProgress() {
@@ -733,3 +785,4 @@
     </script>
 </body>
 </html>
+
